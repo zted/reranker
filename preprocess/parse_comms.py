@@ -16,10 +16,8 @@ for commName in allComms:
             newSent.append(tok.text.lower())
         resultStr = ' '.join(newSent)
         if num == 0:
-            printStr = '{} Q: {}\n'.format(comm.id, resultStr)
-            pass
+            printStr = '{} {} Q: {}\n'.format(comm.id, '-', resultStr)
         else:
             label = 1 if sec.label == 'positive' else 0
             printStr = '{}.{} {} P: {}\n'.format(comm.id, num, label, resultStr)
-            pass
         outfile.write(printStr)
