@@ -1,9 +1,13 @@
+"""
+Parses all communications in a folder and outputs the sentences into a file, labelled question/passage
+"""
+
 from concrete.util import CommunicationReader
 import os
 
-commDir = '/home/ted/COE/data/mini_aquaint/'
+commDir = '/home/ted/COE/data/aquaint_train/'
 allComms = sorted(os.listdir(commDir))
-outfile = open('/home/ted/COE/data/allComms.txt', 'w')
+outfile = open('../data/allComms.txt', 'w')
 
 for commName in allComms:
     cr = CommunicationReader(commDir+commName)
