@@ -1,6 +1,6 @@
 import numpy as np
 from keras.models import Sequential
-from keras.layers import Dense, Dropout, Activation
+from keras.layers import Dense, Dropout
 from keras.callbacks import ModelCheckpoint
 import numpy
 
@@ -37,50 +37,60 @@ def batch(x_data, y_data, vocab_dim, embedding_weights, static, n=64, shuffle=Fa
         yield x_data_subset, y_data_subset
 
 
-def train_nn(dataset, epochs, batch_size=5):
-    # fix random seed for reproducibility
-    Y, X, IDs = load_data(dataset)
-    input_dim = X.shape[1]
+def predict_ranking(evalFile, outFile):
+
+    X, qids, pids = load_data(evalFile)
+    input_dim = X[0].shape[1]
+
+    assert len(pids[0]) == len(X[0])
+
     model = Sequential()
     model.add(Dense(64, input_dim=input_dim, init='uniform', activation='relu'))
     model.add(Dense(64, activation='relu'))
     model.add(Dropout(0.5))
-    model.add(Dense(1))
-    model.add(Activation('sigmoid'))
+    model.add(Dense(1, activation='sigmoid'))
     model.compile(loss='binary_crossentropy', optimizer='rmsprop', metrics=['accuracy'])
 
-    X_train = X[1000:]
-    Y_train = Y[1000:]
-    X_val = X[0:1000]
-    Y_val = Y[0:1000]
+    weightsFile = '../model/weights.hdf5'
+    model.load_weights(weightsFile)
 
-    tmpweights = '../model/weights.hdf5'
-    checkpointer = ModelCheckpoint(filepath=tmpweights, monitor='val_acc', verbose=1, save_best_only=True)
+    Y_p = []
+    for x in X:
+        Y_p.append(model.predict(x))
 
-    model.fit(X_train, Y_train, batch_size=batch_size, nb_epoch=epochs,
-              validation_data=(X_val, Y_val), callbacks=[checkpointer])
+    f = open(outFile, 'w')
+
+    for n, qid in enumerate(qids):
+        tupes = zip(Y_p[n], pids[n])
+        sortedTupes = sorted(tupes, key=lambda x: x[0], reverse=True)
+        for n, (y, pid) in enumerate(sortedTupes):
+            f.write('{}\tITER\t{}\t{}\t{}\tSOMEID\n'.format(qid, pid, n, 1001-n))
 
 
 def load_data(someFile):
-    y = []
     x = []
-    ID = []
+    QIDS = []
+    PIDS = []
+    previous = ''
     with open(someFile, 'r') as f:
         for line in f:
             splits = line.split('\t')
-            relevance = int(splits[0])
             qid = splits[1]
             pid = splits[2]
+            if qid != previous:
+                PIDS.append([])
+                previous = qid
+                QIDS.append(qid)
+                x.append([])
             x_data = np.array(splits[3].rstrip('\n').split(' '), dtype=np.float32)
-            y.append(relevance)
-            x.append(x_data)
-            ID.append(pid)
-    return np.array(y, dtype=np.int8), np.array(x), ID
+            PIDS[-1].append(pid)
+            x[-1].append(x_data)
+    x = map(np.array, x)
+    return x, QIDS, PIDS
 
 
 if __name__ == "__main__":
 
-    TRAINFILE = '../data/training_vectors_aquaint.txt'
-    EPOCHS = 20
-
-    train_nn(TRAINFILE, EPOCHS)
+    EVAL = '../data/dev_vectors_good.txt'
+    RESULTSFILE = '../data/predictions_dev_good.txt'
+    predict_ranking(EVAL, RESULTSFILE)

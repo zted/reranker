@@ -1,29 +1,27 @@
 from gensim.models import Doc2Vec
 
-training_sentences = '../data/allComms.txt'
-d2v_mod = Doc2Vec.load('../data/imdb_all.d2v')
-outfile = '../data/training_vectors.txt'
+training_sentences = '../data/aquaint_label_train.txt'
+d2v_mod = Doc2Vec.load('../data/aquaint.d2v')
+outfile = '../data/training_vectors_aquaint.txt'
 printOut = open(outfile, 'w')
 
 
 with open(training_sentences, 'r') as f:
     for line in f:
         splits = line.rstrip('\n').split(' ')
-        ID = splits[0]
+        pid = splits[0]
         relevance = splits[1]
         sentType = splits[2]
         sent = splits[3:]
         vec = map(str, d2v_mod.infer_vector(sent))
         if sentType == 'Q:':
-            qid = ID
+            qid = pid
             q_vec = vec
             # it's a question
         elif sentType == 'P:':
             combinedVec = q_vec + vec
-            vecString = ''
-            for n, v in enumerate(combinedVec):
-                vecString += ' ' + v
-            resultStr = '{} {}{}\n'.format(relevance, qid, vecString)
+            vecString = ' '.join(combinedVec)
+            resultStr = '{}\t{}\t{}\t{}\n'.format(relevance, qid, pid, vecString)
             printOut.write(resultStr)
             # it's a passage
         else:

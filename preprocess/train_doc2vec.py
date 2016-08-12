@@ -38,14 +38,15 @@ class LabeledLineSentence(object):
         return self.sentences
 
 
-sources = {'/home/ted/Downloads/imdbstuff/test-neg.txt': 'TEST_NEG',
-           '/home/ted/Downloads/imdbstuff/test-pos.txt': 'TEST_POS',
-           '/home/ted/Downloads/imdbstuff/train-pos.txt': 'TRAIN_POS',
-           '/home/ted/Downloads/imdbstuff/train-neg.txt': 'TRAIN_NEG'
+sources = {'/home/ted/COE/reranker/data/aquaint_train_unsup.txt': 'AQUAINT',
+           # '/home/ted/Downloads/imdbstuff/test-neg.txt': 'TEST_NEG',
+           # '/home/ted/Downloads/imdbstuff/test-pos.txt': 'TEST_POS',
+           # '/home/ted/Downloads/imdbstuff/train-pos.txt': 'TRAIN_POS',
+           # '/home/ted/Downloads/imdbstuff/train-neg.txt': 'TRAIN_NEG',
+           # '/home/ted/Downloads/imdbstuff/train-unsup.txt': 'TRAIN_UNSUP',
            }
 
 sentences = LabeledLineSentence(sources)
-
 model = Doc2Vec(min_count=1, window=10, size=100, sample=1e-4, negative=5, workers=8)
 
 model.build_vocab(sentences.to_array())
@@ -53,4 +54,4 @@ for epoch in range(10):
     model.train(sentences.sentences_perm())
     print('Finished {} epochs'.format(epoch))
 
-model.save('../data/imdb_all.d2v')
+model.save('../data/aquaint.d2v')
